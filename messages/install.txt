@@ -1,7 +1,7 @@
 SublimeLinter-annotations
 -------------------------------
 This linter plugin for SublimeLinter highlights annotations in comments
-such as TODO, README and FIXME.
+such as FIXME, NOTE, README, TODO and XXX.
 
 For more information on configuring this linter:
 
