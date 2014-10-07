@@ -17,7 +17,7 @@ from SublimeLinter.lint import highlight, Linter, persist
 
 class Annotations(Linter):
 
-    """Discovers and marks TODO, README, FIXME annotations."""
+    """Discovers and marks FIXME, NOTE, README, TODO and XXX annotations."""
 
     syntax = '*'
     cmd = None
@@ -32,8 +32,8 @@ class Annotations(Linter):
     }
 
     defaults = {
-        '-errors:,': ['FIXME'],
-        '-warnings:,': ['TODO', 'README']
+        '-errors:,': ['FIXME', 'XXX'],
+        '-warnings:,': ['NOTE', 'README', 'TODO']
     }
 
     def run(self, cmd, code):
