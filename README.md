@@ -3,7 +3,7 @@ SublimeLinter-annotations
 
 [![Build Status](https://travis-ci.org/SublimeLinter/SublimeLinter-annotations.svg?branch=master)](https://travis-ci.org/SublimeLinter/SublimeLinter-annotations)
 
-This linter plugin for [SublimeLinter](http://sublimelinter.readthedocs.org) highlights annotations in comments such as FIXME, NOTE, TODO, XXX and README. It will be used with all files.
+This linter plugin for [SublimeLinter](http://sublimelinter.readthedocs.org) highlights annotations in comments such as FIXME, NOTE, TODO, @todo, XXX, and README. It will be used with all files.
 
 ## Installation
 SublimeLinter 3 must be installed in order to use this plugin. If SublimeLinter 3 is not installed, please follow the instructions [here](http://sublimelinter.readthedocs.org/en/latest/installation.html).

@@ -3,7 +3,7 @@
 # Linter for SublimeLinter3, a code checking framework for Sublime Text 3
 #
 # Written by Aparajita Fishman
-# Copyright (c) 2013 Aparajita Fishman
+# Copyright (c) 2015 The SublimeLinter Community
 #
 # License: MIT
 #
@@ -17,7 +17,7 @@ from SublimeLinter.lint import highlight, Linter, persist
 
 class Annotations(Linter):
 
-    """Discovers and marks FIXME, NOTE, README, TODO and XXX annotations."""
+    """Discovers and marks FIXME, NOTE, README, TODO, @todo, and XXX annotations."""
 
     syntax = '*'
     cmd = None
@@ -32,8 +32,8 @@ class Annotations(Linter):
     }
 
     defaults = {
-        '-errors:,': ['FIXME', 'XXX'],
-        '-warnings:,': ['NOTE', 'README', 'TODO']
+        '-errors:,': ['FIXME'],
+        '-warnings:,': ['NOTE', 'README', 'TODO', 'XXX', '@todo']
     }
 
     def run(self, cmd, code):
