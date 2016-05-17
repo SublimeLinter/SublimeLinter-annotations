@@ -3,7 +3,8 @@
 # Linter for SublimeLinter3, a code checking framework for Sublime Text 3
 #
 # Written by Aparajita Fishman
-# Copyright (c) 2015 The SublimeLinter Community
+# Copyright (c) 2015-2016 The SublimeLinter Community
+# Copyright (c) 2013-2014 Aparajita Fishman
 #
 # License: MIT
 #
@@ -16,7 +17,6 @@ from SublimeLinter.lint import highlight, Linter, persist
 
 
 class Annotations(Linter):
-
     """Discovers and marks FIXME, NOTE, README, TODO, @todo, and XXX annotations."""
 
     syntax = '*'
