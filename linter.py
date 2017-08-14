@@ -33,7 +33,7 @@ class Annotations(Linter):
 
     defaults = {
         '-errors:,': ['FIXME'],
-        '-warnings:,': ['NOTE', 'README', 'TODO', 'XXX', '@todo']
+        '-warnings:,': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP']
     }
 
     def run(self, cmd, code):
