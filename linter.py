@@ -11,9 +11,8 @@
 
 """This module exports the Annotations plugin class."""
 
-import os
 import re
-from SublimeLinter.lint import highlight, Linter, persist
+from SublimeLinter.lint import highlight, Linter
 
 
 class Annotations(Linter):
@@ -21,7 +20,7 @@ class Annotations(Linter):
 
     syntax = '*'
     cmd = None
-    regex = '.*'  # Placeholder so that linter will activate
+    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+): ((?P<warning>warning)|(?P<error>error)) (?P<message>.*)')
 
     # We use this to do the matching
     match_re = r'^.*?(?P<message>(?:(?P<warning>{warnings})|(?P<error>{errors})).*)'
@@ -37,18 +36,8 @@ class Annotations(Linter):
     }
 
     def run(self, cmd, code):
-        """
-        Search code for annotations, mark lines that contain them.
-
-        We do the marking here since there is no point in searching
-        the lines twice.
-
-        We return nothing (None) to abort any further processing.
-
-        """
 
         options = {}
-
         type_map = {
             'errors': [],
             'warnings': []
@@ -75,12 +64,12 @@ class Annotations(Linter):
 
             options[option] = '|'.join(values)
 
-        regex = re.compile(self.match_re.format_map(options))
+        match_regex = re.compile(self.match_re.format_map(options))
 
         output = []
 
         for i, line in enumerate(code.splitlines()):
-            match = regex.match(line)
+            match = match_regex.match(line)
 
             if match:
                 col = match.start('message')
@@ -93,11 +82,6 @@ class Annotations(Linter):
                     word = match.group('warning')
                     error_type = highlight.WARNING
 
-                if persist.debug_mode():
-                    output.append('line {}, col {}: {}'.format(i + 1, col + 1, message))
+                output.append('{}:{}: {} {}'.format(i + 1, col + 1, error_type, message))
 
-                self.highlight.range(i, col, length=len(word), error_type=error_type)
-                self.error(i, col, message, error_type)
-
-        if output and persist.debug_mode():
-            persist.printf('{}: {} output:\n{}'.format(self.name, os.path.basename(self.filename), '\n'.join(output)))
+        return ''.join(output)
