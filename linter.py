@@ -12,7 +12,16 @@
 """This module exports the Annotations plugin class."""
 
 import re
-from SublimeLinter.lint import highlight, Linter
+import SublimeLinter
+
+if getattr(SublimeLinter, 'VERSION', 3) > 3:
+    from SublimeLinter.lint import const, Linter
+    ERROR = const.ERROR
+    WARNING = const.WARNING
+else:
+    from SublimeLinter.lint import highlight, Linter
+    ERROR = highlight.ERROR
+    WARNING = highlight.WARNING
 
 
 class Annotations(Linter):
@@ -77,10 +86,10 @@ class Annotations(Linter):
                 message = match.group('message')
 
                 if word:
-                    error_type = highlight.ERROR
+                    error_type = ERROR
                 else:
                     word = match.group('warning')
-                    error_type = highlight.WARNING
+                    error_type = WARNING
 
                 output.append('{}:{}: {} {}'.format(i + 1, col + 1, error_type, message))
 
