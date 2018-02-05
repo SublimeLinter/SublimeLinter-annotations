@@ -14,7 +14,7 @@
 import re
 import SublimeLinter
 
-if getattr(SublimeLinter, 'VERSION', 3) > 3:
+if getattr(SublimeLinter.lint, 'VERSION', 3) > 3:
     from SublimeLinter.lint import const, Linter
     ERROR = const.ERROR
     WARNING = const.WARNING
