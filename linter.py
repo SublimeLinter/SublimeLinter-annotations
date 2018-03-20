@@ -29,10 +29,10 @@ class Annotations(Linter):
 
     syntax = '*'
     cmd = None
-    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+): ((?P<warning>warning)|(?P<error>error)) (?P<message>.*)')
+    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+): (warning \((?P<warning>.+?)\)|error \((?P<error>.+?)\)): (?P<message>.*)')
 
     # We use this to do the matching
-    match_re = r'^.*?(?P<message>(?:(?P<warning>{warnings})|(?P<error>{errors})).*)'
+    match_re = r'^.*?(?:(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
 
     # We are only interested in comments
     selectors = {
@@ -81,16 +81,18 @@ class Annotations(Linter):
             match = match_regex.match(line)
 
             if match:
-                col = match.start('message')
+                col = match.start('error')
                 word = match.group('error')
-                message = match.group('message')
+                message = match.group('message') or '<no message>'
 
                 if word:
                     error_type = ERROR
                 else:
+                    col = match.start('warning')
                     word = match.group('warning')
                     error_type = WARNING
 
-                output.append('{}:{}: {} {}'.format(i + 1, col + 1, error_type, message))
+                output.append('{}:{}: {} ({}): {}'
+                              .format(i + 1, col + 1, error_type, word, message))
 
         return ''.join(output)
