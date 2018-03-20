@@ -29,7 +29,9 @@ class Annotations(Linter):
 
     syntax = '*'
     cmd = None
-    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+): (warning \((?P<warning>.+?)\)|error \((?P<error>.+?)\)): (?P<message>.*)')
+    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+):'
+                       r' (warning \((?P<warning>.+?)\)|error \((?P<error>.+?)\)):'
+                       r' (?P<message>.*)')
 
     # We use this to do the matching
     match_re = r'^.*?(?:(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
