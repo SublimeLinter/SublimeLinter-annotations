@@ -93,4 +93,4 @@ class Annotations(Linter):
 
                 output.append('{}:{}: {} {}'.format(i + 1, col + 1, error_type, message))
 
-        return ''.join(output)
+        return '\n'.join(output)
