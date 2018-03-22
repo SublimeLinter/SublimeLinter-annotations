@@ -46,6 +46,7 @@ class Annotations(Linter):
 
     syntax = '*'
     cmd = None
+    line_col_base = (0, 0)
     regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+):'
                        r' (warning \((?P<warning>.+?)\)|error \((?P<error>.+?)\)):'
                        r' (?P<message>.*)')
@@ -53,14 +54,10 @@ class Annotations(Linter):
     # We use this to do the matching
     mark_regex_template = r'(?:(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
 
-    # We are only interested in comments
-    selectors = {
-        '*': 'comment'
-    }
-
+    # Words to look for
     defaults = {
         'errors': ['FIXME'],
-        'warnings': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP']
+        'warnings': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP'],
     }
 
     def run(self, cmd, code):
@@ -73,23 +70,28 @@ class Annotations(Linter):
         mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
         output = []
+        regions = self.view.find_by_selector('comment')
 
-        for i, line in enumerate(code.splitlines()):
-            match = mark_regex.search(line)
+        for region in regions:
+            region_offset = self.view.rowcol(region.a)
+            region_text = self.view.substr(region)
+            for i, line in enumerate(region_text.splitlines()):
+                match = mark_regex.search(line)
+                if not match:
+                    continue
 
-            if match:
-                col = match.start('error')
-                word = match.group('error')
+                row = region_offset[0] + i
+                # Need to account for region column offset only in first row
+                col = match.start() + (region_offset[1] if i == 0 else 0)
                 message = match.group('message') or '<no message>'
-
+                word = match.group('error')
                 if word:
                     error_type = ERROR
                 else:
-                    col = match.start('warning')
                     word = match.group('warning')
                     error_type = WARNING
 
-                output.append('{}:{}: {} ({}): {}'
-                              .format(i + 1, col + 1, error_type, word, message))
+                output.append('{row}:{col}: {error_type} ({word}): {message}'
+                              .format(**locals()))
 
         return '\n'.join(output)
