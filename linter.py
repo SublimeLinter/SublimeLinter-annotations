@@ -24,6 +24,23 @@ else:
     WARNING = highlight.WARNING
 
 
+def _escape_words(values):
+    if not values:
+        return
+    for value in values:
+        # Add \b word separator fences around the value
+        # if it begins or ends with a word character.
+        value = re.escape(value)
+
+        if value[0].isalnum() or value[0] == '_':
+            value = r'\b' + value
+
+        if value[-1].isalnum() or value[-1] == '_':
+            value += r'\b'
+
+        yield value
+
+
 class Annotations(Linter):
     """Discovers and marks FIXME, NOTE, README, TODO, @todo, and XXX annotations."""
 
@@ -42,38 +59,16 @@ class Annotations(Linter):
     }
 
     defaults = {
-        '-errors:,': ['FIXME'],
-        '-warnings:,': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP']
+        'errors': ['FIXME'],
+        'warnings': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP']
     }
 
     def run(self, cmd, code):
-
+        settings = self.get_view_settings()
         options = {}
-        type_map = {
-            'errors': [],
-            'warnings': []
-        }
-
-        self.build_options(options, type_map)
-
-        for option in options:
-            values = []
-
-            for value in options[option]:
-                if value:
-                    # Add \b word separator fences around the value
-                    # if it begins or ends with a word character.
-                    value = re.escape(value)
-
-                    if value[0].isalnum() or value[0] == '_':
-                        value = r'\b' + value
-
-                    if value[-1].isalnum() or value[-1] == '_':
-                        value += r'\b'
-
-                    values.append(value)
-
-            options[option] = '|'.join(values)
+        for option in ('errors', 'warnings'):
+            words = settings.get(option)
+            options[option] = '|'.join(_escape_words(words))
 
         mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
