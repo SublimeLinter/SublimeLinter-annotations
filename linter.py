@@ -83,7 +83,7 @@ class Annotations(Linter):
                 row = region_offset[0] + i
                 # Need to account for region column offset only in first row
                 col = match.start() + (region_offset[1] if i == 0 else 0)
-                message = match.group('message') or '<no message>'
+                message = match.group('message').strip() or '<no message>'
                 word = match.group('error')
                 if word:
                     error_type = ERROR
