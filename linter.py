@@ -70,7 +70,7 @@ class Annotations(Linter):
         mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
         output = []
-        regions = self.view.find_by_selector('comment')
+        regions = self.view.find_by_selector('comment - punctuation.definition.comment')
 
         for region in regions:
             region_offset = self.view.rowcol(region.a)
