@@ -34,7 +34,7 @@ class Annotations(Linter):
                        r' (?P<message>.*)')
 
     # We use this to do the matching
-    match_re = r'^.*?(?:(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
+    mark_regex_template = r'(?:(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
 
     # We are only interested in comments
     selectors = {
@@ -75,12 +75,12 @@ class Annotations(Linter):
 
             options[option] = '|'.join(values)
 
-        match_regex = re.compile(self.match_re.format_map(options))
+        mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
         output = []
 
         for i, line in enumerate(code.splitlines()):
-            match = match_regex.match(line)
+            match = mark_regex.search(line)
 
             if match:
                 col = match.start('error')
