@@ -24,73 +24,74 @@ else:
     WARNING = highlight.WARNING
 
 
+def _escape_words(values):
+    if not values:
+        return
+    for value in values:
+        # Add \b word separator fences around the value
+        # if it begins or ends with a word character.
+        value = re.escape(value)
+
+        if value[0].isalnum() or value[0] == '_':
+            value = r'\b' + value
+
+        if value[-1].isalnum() or value[-1] == '_':
+            value += r'\b'
+
+        yield value
+
+
 class Annotations(Linter):
     """Discovers and marks FIXME, NOTE, README, TODO, @todo, and XXX annotations."""
 
     syntax = '*'
     cmd = None
-    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+): ((?P<warning>warning)|(?P<error>error)) (?P<message>.*)')
+    line_col_base = (0, 0)
+    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+):'
+                       r' (warning \((?P<warning>.+?)\)|error \((?P<error>.+?)\)):'
+                       r' (?P<message>.*)')
 
     # We use this to do the matching
-    match_re = r'^.*?(?P<message>(?:(?P<warning>{warnings})|(?P<error>{errors})).*)'
+    mark_regex_template = r'(?:(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
 
-    # We are only interested in comments
-    selectors = {
-        '*': 'comment'
-    }
-
+    # Words to look for
     defaults = {
-        '-errors:,': ['FIXME'],
-        '-warnings:,': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP']
+        'errors': ['FIXME'],
+        'warnings': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP'],
     }
 
     def run(self, cmd, code):
-
+        settings = self.get_view_settings()
         options = {}
-        type_map = {
-            'errors': [],
-            'warnings': []
-        }
+        for option in ('errors', 'warnings'):
+            words = settings.get(option)
+            options[option] = '|'.join(_escape_words(words))
 
-        self.build_options(options, type_map)
-
-        for option in options:
-            values = []
-
-            for value in options[option]:
-                if value:
-                    # Add \b word separator fences around the value
-                    # if it begins or ends with a word character.
-                    value = re.escape(value)
-
-                    if value[0].isalnum() or value[0] == '_':
-                        value = r'\b' + value
-
-                    if value[-1].isalnum() or value[-1] == '_':
-                        value += r'\b'
-
-                    values.append(value)
-
-            options[option] = '|'.join(values)
-
-        match_regex = re.compile(self.match_re.format_map(options))
+        mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
         output = []
+        regions = self.view.find_by_selector('comment - punctuation.definition.comment')
 
-        for i, line in enumerate(code.splitlines()):
-            match = match_regex.match(line)
+        for region in regions:
+            region_offset = self.view.rowcol(region.a)
+            region_text = self.view.substr(region)
+            for i, line in enumerate(region_text.splitlines()):
+                match = mark_regex.search(line)
+                if not match:
+                    continue
 
-            if match:
-                col = match.start('message')
+                row = region_offset[0] + i
+                # Need to account for region column offset only in first row
+                col = match.start() + (region_offset[1] if i == 0 else 0)
+                message = match.group('message').strip() or '<no message>'
                 word = match.group('error')
-                message = match.group('message')
-
                 if word:
                     error_type = ERROR
                 else:
                     word = match.group('warning')
                     error_type = WARNING
 
-                output.append('{}:{}: {} {}'.format(i + 1, col + 1, error_type, message))
+                output.append('{row}:{col}: {error_type} ({word}): {message}'
+                              .format(**locals()))
 
-        return ''.join(output)
+        return '\n'.join(output)
