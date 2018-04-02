@@ -44,7 +44,6 @@ def _escape_words(values):
 class Annotations(Linter):
     """Discovers and marks FIXME, NOTE, README, TODO, @todo, and XXX annotations."""
 
-    syntax = '*'
     cmd = None
     line_col_base = (0, 0)
     regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+):'
@@ -56,6 +55,7 @@ class Annotations(Linter):
 
     # Words to look for
     defaults = {
+        'selector': 'source',
         'errors': ['FIXME'],
         'warnings': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP'],
     }
