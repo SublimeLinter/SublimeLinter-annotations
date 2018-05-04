@@ -12,16 +12,7 @@
 """This module exports the Annotations plugin class."""
 
 import re
-import SublimeLinter.lint
-
-if getattr(SublimeLinter.lint, 'VERSION', 3) > 3:
-    from SublimeLinter.lint import const, Linter
-    ERROR = const.ERROR
-    WARNING = const.WARNING
-else:
-    from SublimeLinter.lint import highlight, Linter
-    ERROR = highlight.ERROR
-    WARNING = highlight.WARNING
+from SublimeLinter.lint import Linter, ERROR, WARNING
 
 
 def _escape_words(values):
