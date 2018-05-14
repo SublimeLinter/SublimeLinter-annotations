@@ -46,7 +46,7 @@ class Annotations(Linter):
 
     # Words to look for
     defaults = {
-        'selector': ' ',
+        'selector': '',  # select all views
         'errors': ['FIXME'],
         'warnings': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP'],
     }
