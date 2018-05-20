@@ -58,7 +58,8 @@ class Annotations(Linter):
             words = settings.get(option)
             options[option] = '|'.join(_escape_words(words))
 
-        mark_regex = re.compile(self.mark_regex_template.format_map(options))
+        template_prefix = r'^' if settings.get('onlyStartsWith', False) else r''
+        mark_regex = re.compile(template_prefix + self.mark_regex_template.format_map(options))
 
         output = []
         regions = self.view.find_by_selector('comment - punctuation.definition.comment')
