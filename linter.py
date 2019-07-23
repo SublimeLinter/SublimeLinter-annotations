@@ -52,10 +52,9 @@ class Annotations(Linter):
     }
 
     def run(self, cmd, code):
-        settings = self.get_view_settings()
         options = {}
         for option in ('errors', 'warnings'):
-            words = settings.get(option)
+            words = self.settings.get(option)
             options[option] = '|'.join(_escape_words(words))
 
         mark_regex = re.compile(self.mark_regex_template.format_map(options))
