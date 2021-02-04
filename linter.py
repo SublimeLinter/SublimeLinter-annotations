@@ -37,23 +37,26 @@ class Annotations(Linter):
 
     cmd = None
     line_col_base = (0, 0)
-    regex = re.compile(r'^(?P<line>\d+):(?P<col>\d+):'
-                       r' (warning \((?P<warning>.+?)\)|error \((?P<error>.+?)\)):'
-                       r' (?P<message>.*)')
+    regex = (
+        r'^(?P<line>\d+):(?P<col>\d+):'
+        r' (?P<error_type>.+?) \((?P<code>.+)\):'
+        r' (?P<message>.*)'
+    )
 
     # We use this to do the matching
-    mark_regex_template = r'(?:(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
+    mark_regex_template = r'(?:(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
 
     # Words to look for
     defaults = {
         'selector': '',  # select all views
-        'errors': ['FIXME'],
-        'warnings': ['NOTE', 'README', 'TODO', '@todo', 'XXX', 'WIP'],
+        'errors': ['FIXME', 'ERROR'],
+        'warnings': ['TODO', '@todo', 'XXX', 'WIP', 'WARNING'],
+        'infos': ['NOTE', 'README', 'INFO'],
     }
 
     def run(self, cmd, code):
         options = {}
-        for option in ('errors', 'warnings'):
+        for option in ('errors', 'warnings', 'infos'):
             words = self.settings.get(option)
             options[option] = '|'.join(_escape_words(words))
 
@@ -79,7 +82,11 @@ class Annotations(Linter):
                     error_type = ERROR
                 else:
                     word = match.group('warning')
-                    error_type = WARNING
+                    if word:
+                        error_type = WARNING
+                    else:
+                        word = match.group('info')
+                        error_type = 'info'
 
                 output.append('{row}:{col}: {error_type} ({word}): {message}'
                               .format(**locals()))

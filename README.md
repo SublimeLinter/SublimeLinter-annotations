@@ -7,7 +7,7 @@ This linter plugin for [SublimeLinter](https://github.com/SublimeLinter/SublimeL
 It will be used with all files.
 
 ## Installation
-SublimeLinter must be installed in order to use this plugin. 
+SublimeLinter must be installed in order to use this plugin.
 
 Please use [Package Control](https://packagecontrol.io) to install the linter plugin.
 
@@ -29,7 +29,7 @@ For example:
 ```json
 "linters": {
     "annotations": {
-        "warnings": "[FOO], BAR",
+        "warnings": ["FOO", "BAR"],
         "errors": ["WHAT?", "OMG!"]
     }
 }
