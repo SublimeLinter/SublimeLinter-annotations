@@ -29,6 +29,7 @@ For example:
 ```json
 "linters": {
     "annotations": {
+        "infos": ["NOTA BENE", "FYI"],
         "warnings": ["FOO", "BAR"],
         "errors": ["WHAT?", "OMG!"]
     }
