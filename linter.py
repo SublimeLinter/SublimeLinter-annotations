@@ -12,7 +12,9 @@
 """This module exports the Annotations plugin class."""
 
 import re
-from SublimeLinter.lint import Linter, ERROR, WARNING
+
+import sublime
+from SublimeLinter.lint import Linter, ERROR, WARNING, util
 
 
 def _escape_words(values):
@@ -37,11 +39,6 @@ class Annotations(Linter):
 
     cmd = None
     line_col_base = (0, 0)
-    regex = (
-        r'^(?P<line>\d+):(?P<col>\d+):'
-        r' (?P<error_type>.+?) \((?P<code>.+)\):'
-        r' (?P<message>.*)'
-    )
 
     # We use this to do the matching
     mark_regex_template = r'(?:(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
@@ -58,7 +55,13 @@ class Annotations(Linter):
         'selector_': 'comment - punctuation.definition.comment, support.macro.rust',
     }
 
-    def run(self, cmd, code):
+    def lint(self, _code, _view_has_changed):
+        self.logger.info(
+            "%s: linting '%s'",
+            self.name,
+            util.canonical_filename(self.view),
+        )
+
         options = {}
         for option in ('errors', 'warnings', 'infos'):
             words = self.settings.get(option)
@@ -80,6 +83,7 @@ class Annotations(Linter):
                 row = region_offset[0] + i
                 # Need to account for region column offset only in first row
                 col = match.start() + (region_offset[1] if i == 0 else 0)
+                match_region = sublime.Region(region.a + match.start(), region.a + match.end())
                 message = match.group('message').strip() or '<no message>'
                 word = match.group('error')
                 if word:
@@ -92,7 +96,19 @@ class Annotations(Linter):
                         word = match.group('info')
                         error_type = 'info'
 
-                output.append('{row}:{col}: {error_type} ({word}): {message}'
-                              .format(**locals()))
+                output.append(dict(
+                    line=row,
+                    start=col,
+                    region=match_region,
+                    # linter=,
+                    error_type=error_type,
+                    code=word,
+                    msg=message,
+                    filename=util.get_filename(self.view),
+                    # uid=,
+                    # priority=,
+                    # panel_line=,
+                    offending_text=word,
+                ))
 
-        return '\n'.join(output)
+        return output
