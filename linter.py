@@ -75,15 +75,18 @@ class Annotations(Linter):
         for region in regions:
             region_offset = self.view.rowcol(region.a)
             region_text = self.view.substr(region)
+            offset_until_line = region.a
             for i, line in enumerate(region_text.splitlines()):
                 match = mark_regex.search(line)
                 if not match:
+                    offset_until_line += len(line) + 1  # for \n
                     continue
 
                 row = region_offset[0] + i
                 # Need to account for region column offset only in first row
                 col = match.start() + (region_offset[1] if i == 0 else 0)
-                match_region = sublime.Region(region.a + match.start(), region.a + match.end())
+                match_region = sublime.Region(offset_until_line + match.start(),
+                                              offset_until_line + match.end())
                 message = match.group('message').strip() or '<no message>'
                 word = match.group('error')
                 if word:
@@ -110,5 +113,6 @@ class Annotations(Linter):
                     # panel_line=,
                     offending_text=word,
                 ))
+                offset_until_line += len(line) + 1  # for \n
 
         return output
