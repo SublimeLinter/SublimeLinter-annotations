@@ -19,10 +19,12 @@ Additional SublimeLinter-annotations settings:
 
 |Setting|Description|
 |:------|:----------|
-|warnings|Comma-delimited list of words that will be highlighted as warnings.|
-|errors|Comma-delimited list of words that will be highlighted as errors.|
+|`warnings`|Comma-delimited list of words that will be highlighted as warnings.|
+|`errors`|Comma-delimited list of words that will be highlighted as errors.|
+|`infos`|Comma-delimited list of words that will be highlighted as infos.|
+|`comment_selector` (*advanced*)| A scope selector for regions that the word lists will be searched in.|
 
-You may provide a string with multiple words separated by commas or a list of strings. Matching is case-sensitive and matches whole words.
+Matching is case-sensitive and matches whole words.
 
 For example:
 
