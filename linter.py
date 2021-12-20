@@ -50,9 +50,12 @@ class Annotations(Linter):
     defaults = {
         'selector': '',  # select all views
         'errors': ['FIXME', 'ERROR'],
-        'warnings': ['TODO', '@todo', 'XXX', 'WIP', 'WARNING'],
+        'warnings': [
+            'TODO', '@todo', 'XXX', 'WIP', 'WARNING',
+            'todo!',  # Rust macro
+        ],
         'infos': ['NOTE', 'README', 'INFO'],
-        'selector_': 'comment - punctuation.definition.comment',
+        'selector_': 'comment - punctuation.definition.comment, support.macro.rust',
     }
 
     def run(self, cmd, code):
