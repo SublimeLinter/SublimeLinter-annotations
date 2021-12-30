@@ -22,6 +22,7 @@ Additional SublimeLinter-annotations settings:
 |`warnings`|Comma-delimited list of words that will be highlighted as warnings.|
 |`errors`|Comma-delimited list of words that will be highlighted as errors.|
 |`infos`|Comma-delimited list of words that will be highlighted as infos.|
+|`mark_message`|Whether the rest of the comment line should be marked or just the word.|
 |`selector_` (*advanced*)| A scope selector for regions that the word lists will be searched in.|
 
 Matching is case-sensitive and matches whole words.

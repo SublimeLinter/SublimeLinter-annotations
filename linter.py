@@ -48,7 +48,7 @@ class Annotations(Linter):
     line_col_base = (0, 0)
 
     # We use this to do the matching
-    mark_regex_template = r'(?:(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
+    mark_regex_template = r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
 
     # Words to look for
     defaults = {
@@ -59,6 +59,7 @@ class Annotations(Linter):
             'todo!',  # Rust macro
         ],
         'infos': ['NOTE', 'README', 'INFO'],
+        'mark_message': False,
         'selector_': 'comment - punctuation.definition.comment, support.macro.rust',
     }
 
@@ -91,19 +92,17 @@ class Annotations(Linter):
                     offset_until_line += len(line) + 1  # for \n
                     continue
 
-                match_region = sublime.Region(offset_until_line + match.start(),
-                                              offset_until_line + match.end())
+                group = 0 if self.settings['mark_message'] else 'word'  # type: Union[int, str]
+                match_region = sublime.Region(offset_until_line + match.start(group),
+                                              offset_until_line + match.end(group))
                 message = match.group('message').strip() or '<no message>'
-                word = match.group('error')
-                if word:
+                word = match.group('word')
+                if match.group('error'):
                     error_type = ERROR
+                elif match.group('warning'):
+                    error_type = WARNING
                 else:
-                    word = match.group('warning')
-                    if word:
-                        error_type = WARNING
-                    else:
-                        word = match.group('info')
-                        error_type = 'info'
+                    error_type = 'info'
 
                 row, col = self.view.rowcol(match_region.a)
                 # matches output of process_match
@@ -115,6 +114,6 @@ class Annotations(Linter):
                     error_type=error_type,
                     code=word,
                     msg=message,
-                    offending_text=match.group(0),
+                    offending_text=match.group(group),
                 )
                 offset_until_line += len(line) + 1  # for \n
