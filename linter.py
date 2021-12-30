@@ -17,6 +17,13 @@ import sublime
 from SublimeLinter.lint import Linter, ERROR, WARNING, util
 
 
+MYPY = False
+if MYPY:
+    from typing import List, Iterator, Union
+    from SublimeLinter.lint import VirtualView
+    from SublimeLinter.persist import LintError
+
+
 def _escape_words(values):
     if not values:
         return
@@ -55,21 +62,24 @@ class Annotations(Linter):
         'selector_': 'comment - punctuation.definition.comment, support.macro.rust',
     }
 
-    def lint(self, _code, _view_has_changed):
-        self.logger.info(
-            "%s: linting '%s'",
-            self.name,
-            util.canonical_filename(self.view),
-        )
+    def run(self, _cmd, _code):
+        # type: (Union[List[str], None], str) -> Union[util.popen_output, str]
+        # Override default and do nothing instead.
+        return ''
 
-        options = {}
-        for option in ('errors', 'warnings', 'infos'):
-            words = self.settings.get(option)
-            options[option] = '|'.join(_escape_words(words))
+    def parse_output(self, _proc, _virtual_view):
+        # type: (Union[str, util.popen_output], VirtualView) -> Iterator[LintError]
+        # Emulates parse_output, find_errors, split_match, process_match.
+        # We don't care about the virtual view here
+        # since we operate on the entire actual view,
+        # which is much more efficient.
+        options = {
+            option: '|'.join(_escape_words(self.settings.get(option)))
+            for option in ('errors', 'warnings', 'infos')
+        }
 
         mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
-        output = []
         regions = self.view.find_by_selector(self.settings['selector_'])
 
         for region in regions:
@@ -96,20 +106,15 @@ class Annotations(Linter):
                         error_type = 'info'
 
                 row, col = self.view.rowcol(match_region.a)
-                output.append(dict(
+                # matches output of process_match
+                yield dict(
+                    filename=util.get_filename(self.view),
                     line=row,
                     start=col,
                     region=match_region,
-                    # linter=,
                     error_type=error_type,
                     code=word,
                     msg=message,
-                    filename=util.get_filename(self.view),
-                    # uid=,
-                    # priority=,
-                    # panel_line=,
-                    offending_text=word,
-                ))
+                    offending_text=match.group(0),
+                )
                 offset_until_line += len(line) + 1  # for \n
-
-        return output
