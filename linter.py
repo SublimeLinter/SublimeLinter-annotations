@@ -13,7 +13,7 @@
 
 import re
 
-from SublimeLinter.lint import Linter, LintMatch, ERROR, WARNING
+from SublimeLinter.lint import Linter, LintMatch
 
 
 MYPY = False
@@ -86,10 +86,9 @@ class Annotations(Linter):
 
                 message = match.group('message').strip() or '<no message>'
                 word = match.group('word')
-                if match.group('error'):
-                    error_type = ERROR
-                elif match.group('warning'):
-                    error_type = WARNING
+                for error_type in ('error', 'warning'):
+                    if match.group(error_type):
+                        break
                 else:
                     error_type = 'info'
 
