@@ -11,6 +11,7 @@
 
 """This module exports the Annotations plugin class."""
 
+from itertools import accumulate as accumulate_, chain
 import re
 
 from SublimeLinter.lint import Linter, LintMatch
@@ -18,7 +19,7 @@ from SublimeLinter.lint import Linter, LintMatch
 
 MYPY = False
 if MYPY:
-    from typing import List, Iterator, Union
+    from typing import Iterable, Iterator, List, Union
     from SublimeLinter.lint import util
 
 
@@ -77,18 +78,18 @@ class Annotations(Linter):
 
         for region in regions:
             region_text = self.view.substr(region)
-            offset_until_line = region.a
-            for line in region_text.splitlines(keepends=True):
+            lines = region_text.splitlines(keepends=True)
+            offsets = accumulate(map(len, lines), initial=region.a)
+            for line, offset in zip(lines, offsets):
                 match = mark_regex.search(line)
                 if not match:
-                    offset_until_line += len(line)
                     continue
 
                 message = match.group('message').strip() or '<no message>'
                 word = match.group('word')
                 error_type = next(et for et in ('error', 'warning', 'info') if match.group(et))
 
-                row, col = self.view.rowcol(offset_until_line + match.start())
+                row, col = self.view.rowcol(offset + match.start())
                 text_to_mark = match.group() if self.settings.get('mark_message') else word
                 yield LintMatch(
                     line=row,
@@ -98,4 +99,11 @@ class Annotations(Linter):
                     code=word,
                     message=message
                 )
-                offset_until_line += len(line)
+
+
+def accumulate(iterable, initial=None):
+    # type: (Iterable[int], int) -> Iterable[int]
+    if initial is None:
+        return accumulate_(iterable)
+    else:
+        return accumulate_(chain([initial], iterable))
