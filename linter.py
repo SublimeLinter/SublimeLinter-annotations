@@ -13,15 +13,13 @@
 
 import re
 
-import sublime
-from SublimeLinter.lint import Linter, ERROR, WARNING, util
+from SublimeLinter.lint import Linter, LintMatch, ERROR, WARNING
 
 
 MYPY = False
 if MYPY:
     from typing import List, Iterator, Union
-    from SublimeLinter.lint import VirtualView
-    from SublimeLinter.persist import LintError
+    from SublimeLinter.lint import util
 
 
 def _escape_words(values):
@@ -64,15 +62,10 @@ class Annotations(Linter):
 
     def run(self, cmd, code):
         # type: (Union[List[str], None], str) -> Union[util.popen_output, str]
-        # Override default and do nothing instead.
-        return ''
+        return 'something so SublimeLinter will not assume this view to be `ok`'
 
-    def parse_output(self, _proc, _virtual_view):
-        # type: (Union[str, util.popen_output], VirtualView) -> Iterator[LintError]
-        # Emulates parse_output, find_errors, split_match, process_match.
-        # We don't care about the virtual view here
-        # since we operate on the entire actual view,
-        # which is much more efficient.
+    def find_errors(self, output):
+        # type: (str) -> Iterator[LintMatch]
         options = {
             option: '|'.join(_escape_words(self.settings.get(option)))
             for option in ('errors', 'warnings', 'infos')
@@ -91,9 +84,6 @@ class Annotations(Linter):
                     offset_until_line += len(line)
                     continue
 
-                group = 0 if self.settings['mark_message'] else 'word'  # type: Union[int, str]
-                match_region = sublime.Region(offset_until_line + match.start(group),
-                                              offset_until_line + match.end(group))
                 message = match.group('message').strip() or '<no message>'
                 word = match.group('word')
                 if match.group('error'):
@@ -103,16 +93,14 @@ class Annotations(Linter):
                 else:
                     error_type = 'info'
 
-                row, col = self.view.rowcol(match_region.a)
-                # matches output of process_match
-                yield dict(
-                    filename=util.get_filename(self.view),
+                row, col = self.view.rowcol(offset_until_line + match.start())
+                text_to_mark = match.group() if self.settings.get('mark_message') else word
+                yield LintMatch(
                     line=row,
-                    start=col,
-                    region=match_region,
+                    col=col,
+                    near=text_to_mark,
                     error_type=error_type,
                     code=word,
-                    msg=message,
-                    offending_text=match.group(group),
+                    message=message
                 )
                 offset_until_line += len(line)
