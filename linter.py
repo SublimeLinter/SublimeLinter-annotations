@@ -45,7 +45,6 @@ class Annotations(Linter):
     """Discovers and marks FIXME, NOTE, README, TODO, @todo, and XXX annotations."""
 
     cmd = None
-    line_col_base = (0, 0)
 
     # We use this to do the matching
     mark_regex_template = r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
