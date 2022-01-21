@@ -86,10 +86,10 @@ class Annotations(Linter):
         for region in regions:
             region_text = self.view.substr(region)
             offset_until_line = region.a
-            for line in region_text.splitlines():
+            for line in region_text.splitlines(keepends=True):
                 match = mark_regex.search(line)
                 if not match:
-                    offset_until_line += len(line) + 1  # for \n
+                    offset_until_line += len(line)
                     continue
 
                 group = 0 if self.settings['mark_message'] else 'word'  # type: Union[int, str]
@@ -116,4 +116,4 @@ class Annotations(Linter):
                     msg=message,
                     offending_text=match.group(group),
                 )
-                offset_until_line += len(line) + 1  # for \n
+                offset_until_line += len(line)
