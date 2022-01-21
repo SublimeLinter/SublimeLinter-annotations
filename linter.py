@@ -62,7 +62,7 @@ class Annotations(Linter):
         'selector_': 'comment - punctuation.definition.comment, support.macro.rust',
     }
 
-    def run(self, _cmd, _code):
+    def run(self, cmd, code):
         # type: (Union[List[str], None], str) -> Union[util.popen_output, str]
         # Override default and do nothing instead.
         return ''
