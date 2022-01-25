@@ -52,7 +52,7 @@ class Annotations(Linter):
         'errors': ['FIXME', 'ERROR'],
         'warnings': ['TODO', '@todo', 'XXX', 'WIP', 'WARNING'],
         'infos': ['NOTE', 'README', 'INFO'],
-        'comment_selector': 'comment - punctuation.definition.comment',
+        'selector_': 'comment - punctuation.definition.comment',
     }
 
     def run(self, cmd, code):
@@ -64,7 +64,7 @@ class Annotations(Linter):
         mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
         output = []
-        regions = self.view.find_by_selector(self.settings['comment_selector'])
+        regions = self.view.find_by_selector(self.settings['selector_'])
 
         for region in regions:
             region_offset = self.view.rowcol(region.a)
