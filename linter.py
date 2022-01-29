@@ -11,7 +11,7 @@
 
 """This module exports the Annotations plugin class."""
 
-from itertools import accumulate as accumulate_, chain
+from itertools import accumulate, chain
 import re
 
 from SublimeLinter.lint import Linter, LintMatch
@@ -19,7 +19,7 @@ from SublimeLinter.lint import Linter, LintMatch
 
 MYPY = False
 if MYPY:
-    from typing import Iterable, Iterator, List, Union
+    from typing import Iterator, List, Union
     from SublimeLinter.lint import util
 
 
@@ -79,7 +79,7 @@ class Annotations(Linter):
         for region in regions:
             region_text = self.view.substr(region)
             lines = region_text.splitlines(keepends=True)
-            offsets = accumulate(map(len, lines), initial=region.a)
+            offsets = accumulate(chain([region.a], map(len, lines)))
             for line, offset in zip(lines, offsets):
                 match = mark_regex.search(line)
                 if not match:
@@ -99,11 +99,3 @@ class Annotations(Linter):
                     code=word,
                     message=message
                 )
-
-
-def accumulate(iterable, initial=None):
-    # type: (Iterable[int], int) -> Iterable[int]
-    if initial is None:
-        return accumulate_(iterable)
-    else:
-        return accumulate_(chain([initial], iterable))
