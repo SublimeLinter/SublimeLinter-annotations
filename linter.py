@@ -86,11 +86,7 @@ class Annotations(Linter):
 
                 message = match.group('message').strip() or '<no message>'
                 word = match.group('word')
-                for error_type in ('error', 'warning'):
-                    if match.group(error_type):
-                        break
-                else:
-                    error_type = 'info'
+                error_type = next(et for et in ('error', 'warning', 'info') if match.group(et))
 
                 row, col = self.view.rowcol(offset_until_line + match.start())
                 text_to_mark = match.group() if self.settings.get('mark_message') else word
