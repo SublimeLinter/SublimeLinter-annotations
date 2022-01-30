@@ -11,8 +11,16 @@
 
 """This module exports the Annotations plugin class."""
 
+from itertools import accumulate, chain
 import re
-from SublimeLinter.lint import Linter, ERROR, WARNING
+
+from SublimeLinter.lint import Linter, LintMatch
+
+
+MYPY = False
+if MYPY:
+    from typing import Iterator, List, Union
+    from SublimeLinter.lint import util
 
 
 def _escape_words(values):
@@ -36,15 +44,9 @@ class Annotations(Linter):
     """Discovers and marks FIXME, NOTE, README, TODO, @todo, and XXX annotations."""
 
     cmd = None
-    line_col_base = (0, 0)
-    regex = (
-        r'^(?P<line>\d+):(?P<col>\d+):'
-        r' (?P<error_type>.+?) \((?P<code>.+)\):'
-        r' (?P<message>.*)'
-    )
 
     # We use this to do the matching
-    mark_regex_template = r'(?:(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
+    mark_regex_template = r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
 
     # Words to look for
     defaults = {
@@ -55,44 +57,45 @@ class Annotations(Linter):
             'todo!',  # Rust macro
         ],
         'infos': ['NOTE', 'README', 'INFO'],
+        'mark_message': False,
         'selector_': 'comment - punctuation.definition.comment, support.macro.rust',
     }
 
     def run(self, cmd, code):
-        options = {}
-        for option in ('errors', 'warnings', 'infos'):
-            words = self.settings.get(option)
-            options[option] = '|'.join(_escape_words(words))
+        # type: (Union[List[str], None], str) -> Union[util.popen_output, str]
+        return 'something so SublimeLinter will not assume this view to be `ok`'
+
+    def find_errors(self, output):
+        # type: (str) -> Iterator[LintMatch]
+        options = {
+            option: '|'.join(_escape_words(self.settings.get(option)))
+            for option in ('errors', 'warnings', 'infos')
+        }
 
         mark_regex = re.compile(self.mark_regex_template.format_map(options))
 
-        output = []
         regions = self.view.find_by_selector(self.settings['selector_'])
 
         for region in regions:
-            region_offset = self.view.rowcol(region.a)
             region_text = self.view.substr(region)
-            for i, line in enumerate(region_text.splitlines()):
+            lines = region_text.splitlines(keepends=True)
+            offsets = accumulate(chain([region.a], map(len, lines)))
+            for line, offset in zip(lines, offsets):
                 match = mark_regex.search(line)
                 if not match:
                     continue
 
-                row = region_offset[0] + i
-                # Need to account for region column offset only in first row
-                col = match.start() + (region_offset[1] if i == 0 else 0)
                 message = match.group('message').strip() or '<no message>'
-                word = match.group('error')
-                if word:
-                    error_type = ERROR
-                else:
-                    word = match.group('warning')
-                    if word:
-                        error_type = WARNING
-                    else:
-                        word = match.group('info')
-                        error_type = 'info'
+                word = match.group('word')
+                error_type = next(et for et in ('error', 'warning', 'info') if match.group(et))
 
-                output.append('{row}:{col}: {error_type} ({word}): {message}'
-                              .format(**locals()))
-
-        return '\n'.join(output)
+                row, col = self.view.rowcol(offset + match.start())
+                text_to_mark = match.group() if self.settings.get('mark_message') else word
+                yield LintMatch(
+                    line=row,
+                    col=col,
+                    near=text_to_mark,
+                    error_type=error_type,
+                    code=word,
+                    message=message
+                )
