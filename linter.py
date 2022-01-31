@@ -46,7 +46,10 @@ class Annotations(Linter):
     cmd = None
 
     # We use this to do the matching
-    mark_regex_template = r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
+    mark_regex_template = (
+        r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?[ \t]*'
+        r'(?P<message>.*)'
+    )
 
     # Words to look for
     defaults = {
