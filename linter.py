@@ -46,7 +46,10 @@ class Annotations(Linter):
     cmd = None
 
     # We use this to do the matching
-    mark_regex_template = r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*(?P<message>.*)'
+    mark_regex_template = (
+        r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*'
+        r'(?P<message>.*)'
+    )
 
     # Words to look for
     defaults = {
@@ -81,11 +84,11 @@ class Annotations(Linter):
             lines = region_text.splitlines(keepends=True)
             offsets = accumulate(chain([region.a], map(len, lines)))
             for line, offset in zip(lines, offsets):
-                match = mark_regex.search(line)
+                match = mark_regex.search(line.rstrip())
                 if not match:
                     continue
 
-                message = match.group('message').strip() or '<no message>'
+                message = match.group('message') or '<no message>'
                 word = match.group('word')
                 error_type = next(et for et in ('error', 'warning', 'info') if match.group(et))
 
