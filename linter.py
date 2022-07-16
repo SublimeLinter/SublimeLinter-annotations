@@ -96,9 +96,9 @@ class Annotations(Linter):
                 word = match.group('word')
                 match_groups = match.groupdict()
                 error_type = next(
-                    et
-                    for et in ('errors', 'warnings', 'infos')
-                    if et in match_groups
+                    error_type_
+                    for error_type_ in ('errors', 'warnings', 'infos')
+                    if error_type_ in match_groups
                 )
 
                 row, col = self.view.rowcol(offset + match.start())
