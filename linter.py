@@ -24,8 +24,6 @@ if MYPY:
 
 
 def _escape_words(values):
-    if not values:
-        return
     for value in values:
         # Add \b word separator fences around the value
         # if it begins or ends with a word character.
@@ -47,8 +45,7 @@ class Annotations(Linter):
 
     # We use this to do the matching
     mark_regex_template = (
-        r'(?P<word>(?P<info>{infos})|(?P<warning>{warnings})|(?P<error>{errors})):?\s*'
-        r'(?P<message>.*)'
+        r'(?P<word>{}):?\s*'r'(?P<message>.*)'
     )
 
     # Words to look for
@@ -71,14 +68,21 @@ class Annotations(Linter):
     def find_errors(self, output):
         # type: (str) -> Iterator[LintMatch]
         options = {
-            option: '|'.join(_escape_words(self.settings.get(option)))
+            option: '|'.join(_escape_words(self.settings[option]))
             for option in ('errors', 'warnings', 'infos')
+            if self.settings[option]
         }
+        if not options:
+            return
 
-        mark_regex = re.compile(self.mark_regex_template.format_map(options))
+        mark_regex = re.compile(self.mark_regex_template.format(
+            "|".join(
+                "(?P<{}>{})".format(key, value)
+                for key, value in options.items()
+            )
+        ))
 
         regions = self.view.find_by_selector(self.settings['selector_'])
-
         for region in regions:
             region_text = self.view.substr(region)
             lines = region_text.splitlines(keepends=True)
@@ -90,7 +94,12 @@ class Annotations(Linter):
 
                 message = match.group('message') or '<no message>'
                 word = match.group('word')
-                error_type = next(et for et in ('error', 'warning', 'info') if match.group(et))
+                match_groups = match.groupdict()
+                error_type = next(
+                    error_type_
+                    for error_type_ in ('errors', 'warnings', 'infos')
+                    if error_type_ in match_groups
+                )
 
                 row, col = self.view.rowcol(offset + match.start())
                 text_to_mark = match.group() if self.settings.get('mark_message') else word
