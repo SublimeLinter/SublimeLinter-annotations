@@ -83,7 +83,6 @@ class Annotations(Linter):
         ))
 
         regions = self.view.find_by_selector(self.settings['selector_'])
-
         for region in regions:
             region_text = self.view.substr(region)
             lines = region_text.splitlines(keepends=True)
