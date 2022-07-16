@@ -24,8 +24,6 @@ if MYPY:
 
 
 def _escape_words(values):
-    if not values:
-        return
     for value in values:
         # Add \b word separator fences around the value
         # if it begins or ends with a word character.
