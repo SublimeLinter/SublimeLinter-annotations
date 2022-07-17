@@ -52,6 +52,35 @@ class TestRegex(DeferrableTestCase):
     @p.expand(
         [
             (
+                "// NOTE(kaste): a note",
+                "scope:source.js",
+                [
+                    {
+                        "line": 0,
+                        "start": 3,
+                        "msg": "(kaste): a note",
+                        "error_type": "info",
+                    }
+                ],
+            )
+        ]
+    )
+    def test_extract_author_issue_33(
+        self, view_content, syntax, expected
+    ):
+        window = self.create_window()
+        view = self.create_view(window)
+        view.assign_syntax(syntax)
+        fname = util.get_filename(view)
+        view.run_command('append', {'characters': view_content})
+
+        result = yield from self.await_lint_result("annotations", fname)
+
+        self.assertResult(result, expected)
+
+    @p.expand(
+        [
+            (
                 "# {} The {} message".format(word, error_type),
                 "scope:source.python",
                 {
