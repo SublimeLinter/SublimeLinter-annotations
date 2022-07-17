@@ -42,9 +42,26 @@ class TestRegex(unittest.TestCase):
         actual = list(linter.find_errors(string))
         self.assertFalse(actual)
 
-    @p.expand([
-        ("# TODO The message", "scope:source.python", {"line": 0, "col": 2, "message": "The message"})
-    ])
+    @p.expand(
+        [
+            (
+                "# {} The {} message".format(word, error_type),
+                "scope:source.python",
+                {
+                    "line": 0,
+                    "col": 2,
+                    "message": "The {} message".format(error_type),
+                    "error_type": error_type,
+                },
+            )
+            for error_type, words in (
+                ("error", ("FIXME", "ERROR")),
+                ("warning", ("TODO", "@todo", "XXX", "WIP", "WARNING")),
+                ("info", ("NOTE", "README", "INFO")),
+            )
+            for word in words
+        ]
+    )
     def test_a(self, view_content, syntax, expected):
         window = self.create_window()
         view = self.create_view(window)
