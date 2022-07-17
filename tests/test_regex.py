@@ -72,3 +72,34 @@ class TestRegex(unittest.TestCase):
         linter = Linter(view, settings)
         actual = list(linter.find_errors("_ignored by plugin"))[0]
         self.assertEqual({k: actual[k] for k in expected.keys()}, expected)
+
+    @p.expand(
+        [
+            (
+                "# NOTE The note message\n" "# ERROR The error message\n",
+                "scope:source.python",
+                [
+                    {
+                        "line": 1,
+                        "col": 2,
+                        "message": "The error message",
+                        "error_type": "error",
+                    }
+                ],
+            )
+        ]
+    )
+    def test_set_word_group_to_null_issue_39(
+        self, view_content, syntax, expected
+    ):
+        window = self.create_window()
+        view = self.create_view(window)
+        view.assign_syntax(syntax)
+        view.run_command('append', {'characters': view_content})
+
+        settings = get_linter_settings(Linter, view, context=None)
+        settings["infos"] = []
+        linter = Linter(view, settings)
+        actual = list(linter.find_errors("_ignored by plugin"))
+        for i, error in enumerate(expected):
+            self.assertEqual({k: actual[i][k] for k in error.keys()}, error)
