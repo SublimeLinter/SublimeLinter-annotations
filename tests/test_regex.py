@@ -3,7 +3,6 @@ import importlib
 import sublime
 from unittesting import DeferrableTestCase
 
-from SublimeLinter.lint.linter import get_linter_settings
 from SublimeLinter.lint import events, util
 
 from SublimeLinter.tests.parameterized import parameterized as p
@@ -85,8 +84,8 @@ class TestRegex(DeferrableTestCase):
                 [
                     {
                         "line": 1,
-                        "col": 2,
-                        "message": "The error message",
+                        "start": 2,
+                        "msg": "The error message",
                         "error_type": "error",
                     }
                 ],
@@ -99,11 +98,11 @@ class TestRegex(DeferrableTestCase):
         window = self.create_window()
         view = self.create_view(window)
         view.assign_syntax(syntax)
-        view.run_command('append', {'characters': view_content})
+        fname = util.get_filename(view)
         view.settings().set("SublimeLinter.linters.annotations.infos", None)
+        view.run_command('append', {'characters': view_content})
 
-        settings = get_linter_settings(Linter, view, context=None)
-        linter = Linter(view, settings)
-        actual = list(linter.find_errors("_ignored by plugin"))
+        result = yield from self.await_lint_result("annotations", fname)
+
         for i, error in enumerate(expected):
-            self.assertEqual({k: actual[i][k] for k in error.keys()}, error)
+            self.assertEqual({k: result[i][k] for k in error.keys()}, error)
