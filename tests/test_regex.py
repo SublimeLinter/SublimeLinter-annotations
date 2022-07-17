@@ -100,9 +100,9 @@ class TestRegex(DeferrableTestCase):
         view = self.create_view(window)
         view.assign_syntax(syntax)
         view.run_command('append', {'characters': view_content})
+        view.settings().set("SublimeLinter.linters.annotations.infos", None)
 
         settings = get_linter_settings(Linter, view, context=None)
-        settings["infos"] = []
         linter = Linter(view, settings)
         actual = list(linter.find_errors("_ignored by plugin"))
         for i, error in enumerate(expected):
