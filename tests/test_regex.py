@@ -30,18 +30,6 @@ class TestRegex(unittest.TestCase):
         view.set_scratch(True)
         view.close()
 
-    def assertMatch(self, string, expected):
-        linter = Linter(sublime.View(0), {})
-        actual = list(linter.find_errors(string))[0]
-        # `find_errors` fills out more information we don't want to write down
-        # in the examples
-        self.assertEqual({k: actual[k] for k in expected.keys()}, expected)
-
-    def assertNoMatch(self, string):
-        linter = Linter(sublime.View(0), {})
-        actual = list(linter.find_errors(string))
-        self.assertFalse(actual)
-
     @p.expand(
         [
             (
