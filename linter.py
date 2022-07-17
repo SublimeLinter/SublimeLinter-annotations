@@ -98,7 +98,7 @@ class Annotations(Linter):
                 error_type = singularize(next(
                     group
                     for group in ('errors', 'warnings', 'infos')
-                    if group in matched_groups
+                    if matched_groups.get(group)
                 ))
 
                 row, col = self.view.rowcol(offset + match.start())
