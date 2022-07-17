@@ -31,6 +31,13 @@ class TestRegex(DeferrableTestCase):
         view.set_scratch(True)
         view.close()
 
+    def prepare_view(self, view_content, syntax):
+        window = self.create_window()
+        view = self.create_view(window)
+        view.assign_syntax(syntax)
+        view.run_command('append', {'characters': view_content})
+        return view
+
     def assertResult(self, result, expected):
         for actual, error in zip(result, expected):
             self.assertEqual({k: actual[k] for k in error.keys()}, error)
@@ -68,11 +75,8 @@ class TestRegex(DeferrableTestCase):
     def test_extract_author_issue_33(
         self, view_content, syntax, expected
     ):
-        window = self.create_window()
-        view = self.create_view(window)
-        view.assign_syntax(syntax)
+        view = self.prepare_view(view_content, syntax)
         fname = util.get_filename(view)
-        view.run_command('append', {'characters': view_content})
 
         result = yield from self.await_lint_result("annotations", fname)
 
@@ -99,13 +103,11 @@ class TestRegex(DeferrableTestCase):
         ]
     )
     def test_end_to_end(self, view_content, syntax, expected):
-        window = self.create_window()
-        view = self.create_view(window)
-        view.assign_syntax(syntax)
+        view = self.prepare_view(view_content, syntax)
         fname = util.get_filename(view)
 
-        view.run_command('append', {'characters': view_content})
         result = yield from self.await_lint_result("annotations", fname)
+
         self.assertResult(result, [expected])
 
     @p.expand(
@@ -127,12 +129,9 @@ class TestRegex(DeferrableTestCase):
     def test_set_word_group_to_null_issue_39(
         self, view_content, syntax, expected
     ):
-        window = self.create_window()
-        view = self.create_view(window)
-        view.assign_syntax(syntax)
-        fname = util.get_filename(view)
+        view = self.prepare_view(view_content, syntax)
         view.settings().set("SublimeLinter.linters.annotations.infos", None)
-        view.run_command('append', {'characters': view_content})
+        fname = util.get_filename(view)
 
         result = yield from self.await_lint_result("annotations", fname)
 
