@@ -67,29 +67,6 @@ class TestAnnotationsLinter(LintResultTestCase):
     @p.expand(
         [
             (
-                "// NOTE(kaste): a note",
-                "scope:source.js",
-                [
-                    {
-                        "line": 0,
-                        "start": 3,
-                        "msg": "(kaste): a note",
-                        "error_type": "info",
-                    }
-                ],
-            )
-        ]
-    )
-    def test_extract_author_issue_33(
-        self, view_content, syntax, expected
-    ):
-        view = self.prepare_view(view_content, syntax)
-        result = yield from self.await_lint_result(view)
-        self.assertResult(result, expected)
-
-    @p.expand(
-        [
-            (
                 "# {} The {} message".format(word, error_type),
                 "scope:source.python",
                 {
@@ -105,6 +82,18 @@ class TestAnnotationsLinter(LintResultTestCase):
                 ("info", ("NOTE", "README", "INFO")),
             )
             for word in words
+        ]
+        + [
+            (  # extract author of a note #33
+                "// NOTE(kaste): a note",
+                "scope:source.js",
+                {
+                    "line": 0,
+                    "start": 3,
+                    "msg": "(kaste): a note",
+                    "error_type": "info",
+                },
+            )
         ]
     )
     def test_end_to_end(self, view_content, syntax, expected):
