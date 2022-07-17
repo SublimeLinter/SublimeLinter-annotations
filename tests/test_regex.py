@@ -35,6 +35,20 @@ class TestRegex(DeferrableTestCase):
         for actual, error in zip(result, expected):
             self.assertEqual({k: actual[k] for k in error.keys()}, error)
 
+    def await_lint_result(self, linter_name_, filename_):
+        actual = None
+
+        @events.on("LINT_RESULT")
+        def on_result(filename, linter_name, errors, **kwargs):
+            nonlocal actual
+            if linter_name == linter_name_ and filename == filename_:
+                actual = errors
+
+        self.addCleanup(events.off, on_result)
+
+        yield lambda: actual is not None
+        return actual
+
     @p.expand(
         [
             (
@@ -64,20 +78,6 @@ class TestRegex(DeferrableTestCase):
         view.run_command('append', {'characters': view_content})
         result = yield from self.await_lint_result("annotations", fname)
         self.assertResult(result, [expected])
-
-    def await_lint_result(self, linter_name_, filename_):
-        actual = None
-
-        @events.on("LINT_RESULT")
-        def on_result(filename, linter_name, errors, **kwargs):
-            nonlocal actual
-            if linter_name == linter_name_ and filename == filename_:
-                actual = errors
-
-        self.addCleanup(events.off, on_result)
-
-        yield lambda: actual is not None
-        return actual
 
     @p.expand(
         [
