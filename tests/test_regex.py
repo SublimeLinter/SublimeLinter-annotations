@@ -10,7 +10,7 @@ if MYPY:
     from typing import Generator
 
 
-class TestRegex(DeferrableTestCase):
+class LintResultTestCase(DeferrableTestCase):
     def create_window(self):
         sublime.run_command("new_window")
         window = sublime.active_window()
@@ -58,6 +58,8 @@ class TestRegex(DeferrableTestCase):
         assert actual
         return actual
 
+
+class TestAnnotationsLinter(LintResultTestCase):
     @p.expand(
         [
             (
