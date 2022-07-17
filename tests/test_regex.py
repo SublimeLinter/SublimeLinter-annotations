@@ -31,6 +31,10 @@ class TestRegex(DeferrableTestCase):
         view.set_scratch(True)
         view.close()
 
+    def assertResult(self, result, expected):
+        for actual, error in zip(result, expected):
+            self.assertEqual({k: actual[k] for k in error.keys()}, error)
+
     @p.expand(
         [
             (
@@ -59,8 +63,7 @@ class TestRegex(DeferrableTestCase):
 
         view.run_command('append', {'characters': view_content})
         result = yield from self.await_lint_result("annotations", fname)
-        actual = result[0]
-        self.assertEqual({k: actual[k] for k in expected.keys()}, expected)
+        self.assertResult(result, [expected])
 
     def await_lint_result(self, linter_name_, filename_):
         actual = None
@@ -104,5 +107,4 @@ class TestRegex(DeferrableTestCase):
 
         result = yield from self.await_lint_result("annotations", fname)
 
-        for i, error in enumerate(expected):
-            self.assertEqual({k: result[i][k] for k in error.keys()}, error)
+        self.assertResult(result, expected)
