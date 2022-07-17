@@ -94,12 +94,12 @@ class Annotations(Linter):
 
                 message = match.group('message') or '<no message>'
                 word = match.group('word')
-                match_groups = match.groupdict()
-                error_type = next(
-                    error_type_
-                    for error_type_ in ('errors', 'warnings', 'infos')
-                    if error_type_ in match_groups
-                )
+                matched_groups = match.groupdict()
+                error_type = singularize(next(
+                    group
+                    for group in ('errors', 'warnings', 'infos')
+                    if group in matched_groups
+                ))
 
                 row, col = self.view.rowcol(offset + match.start())
                 text_to_mark = match.group() if self.settings.get('mark_message') else word
@@ -111,3 +111,11 @@ class Annotations(Linter):
                     code=word,
                     message=message
                 )
+
+
+def singularize(word):
+    return {
+        "errors": "error",
+        "warnings": "warning",
+        "infos": "info",
+    }[word]
