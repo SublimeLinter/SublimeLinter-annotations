@@ -2,10 +2,14 @@ import importlib
 
 import sublime
 from unittesting import DeferrableTestCase
+from SublimeLinter.tests.parameterized import parameterized as p
 
 from SublimeLinter.lint import events, util
 
-from SublimeLinter.tests.parameterized import parameterized as p
+
+MYPY = False
+if MYPY:
+    from typing import Generator
 
 
 LinterModule = importlib.import_module('SublimeLinter-annotations.linter')
@@ -42,11 +46,14 @@ class TestRegex(DeferrableTestCase):
         for actual, error in zip(result, expected):
             self.assertEqual({k: actual[k] for k in error.keys()}, error)
 
-    def await_lint_result(self, linter_name_, filename_):
+    def await_lint_result(self, linter_name_, view):
+        # type: (str, sublime.View) -> Generator[object, object, list[dict]]
+        filename_ = util.get_filename(view)
         actual = None
 
         @events.on("LINT_RESULT")
         def on_result(filename, linter_name, errors, **kwargs):
+            # type: (str, str, list[dict], object) -> None
             nonlocal actual
             if linter_name == linter_name_ and filename == filename_:
                 actual = errors
@@ -54,6 +61,7 @@ class TestRegex(DeferrableTestCase):
         self.addCleanup(events.off, on_result)
 
         yield lambda: actual is not None
+        assert actual
         return actual
 
     @p.expand(
@@ -76,10 +84,7 @@ class TestRegex(DeferrableTestCase):
         self, view_content, syntax, expected
     ):
         view = self.prepare_view(view_content, syntax)
-        fname = util.get_filename(view)
-
-        result = yield from self.await_lint_result("annotations", fname)
-
+        result = yield from self.await_lint_result("annotations", view)
         self.assertResult(result, expected)
 
     @p.expand(
@@ -104,10 +109,7 @@ class TestRegex(DeferrableTestCase):
     )
     def test_end_to_end(self, view_content, syntax, expected):
         view = self.prepare_view(view_content, syntax)
-        fname = util.get_filename(view)
-
-        result = yield from self.await_lint_result("annotations", fname)
-
+        result = yield from self.await_lint_result("annotations", view)
         self.assertResult(result, [expected])
 
     @p.expand(
@@ -131,8 +133,7 @@ class TestRegex(DeferrableTestCase):
     ):
         view = self.prepare_view(view_content, syntax)
         view.settings().set("SublimeLinter.linters.annotations.infos", None)
-        fname = util.get_filename(view)
 
-        result = yield from self.await_lint_result("annotations", fname)
+        result = yield from self.await_lint_result("annotations", view)
 
         self.assertResult(result, expected)
