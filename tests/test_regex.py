@@ -40,8 +40,10 @@ class LintResultTestCase(DeferrableTestCase):
         for actual, error in zip(result, expected):
             self.assertEqual({k: actual[k] for k in error.keys()}, error)
 
-    def await_lint_result(self, view, linter_name_):
+    def await_lint_result(self, view, linter_name_=None):
         # type: (sublime.View, str) -> Generator[object, object, list[dict]]
+        if linter_name_ is None:
+            linter_name_ = self.linter_name
         filename_ = util.get_filename(view)
         actual = None
 
@@ -60,6 +62,8 @@ class LintResultTestCase(DeferrableTestCase):
 
 
 class TestAnnotationsLinter(LintResultTestCase):
+    linter_name = "annotations"
+
     @p.expand(
         [
             (
@@ -80,7 +84,7 @@ class TestAnnotationsLinter(LintResultTestCase):
         self, view_content, syntax, expected
     ):
         view = self.prepare_view(view_content, syntax)
-        result = yield from self.await_lint_result(view, "annotations")
+        result = yield from self.await_lint_result(view)
         self.assertResult(result, expected)
 
     @p.expand(
@@ -105,7 +109,7 @@ class TestAnnotationsLinter(LintResultTestCase):
     )
     def test_end_to_end(self, view_content, syntax, expected):
         view = self.prepare_view(view_content, syntax)
-        result = yield from self.await_lint_result(view, "annotations")
+        result = yield from self.await_lint_result(view)
         self.assertResult(result, [expected])
 
     @p.expand(
@@ -130,6 +134,6 @@ class TestAnnotationsLinter(LintResultTestCase):
         view = self.prepare_view(view_content, syntax)
         view.settings().set("SublimeLinter.linters.annotations.infos", None)
 
-        result = yield from self.await_lint_result(view, "annotations")
+        result = yield from self.await_lint_result(view)
 
         self.assertResult(result, expected)
