@@ -2,7 +2,7 @@ import sublime
 from unittesting import DeferrableTestCase
 from SublimeLinter.tests.parameterized import parameterized as p
 
-from SublimeLinter.lint import events, util
+from SublimeLinter.lint import events, linter
 
 
 MYPY = False
@@ -44,7 +44,7 @@ class LintResultTestCase(DeferrableTestCase):
         # type: (sublime.View, str) -> Generator[object, object, list[dict]]
         if linter_name_ is None:
             linter_name_ = self.linter_name
-        filename_ = util.get_filename(view)
+        filename_ = linter.get_view_context(view)["canonical_filename"]
         actual = None
 
         @events.on("LINT_RESULT")
