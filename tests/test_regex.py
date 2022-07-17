@@ -57,19 +57,25 @@ class TestRegex(DeferrableTestCase):
         view = self.create_view(window)
         view.assign_syntax(syntax)
         fname = util.get_filename(view)
+
+        view.run_command('append', {'characters': view_content})
+        result = yield from self.await_lint_result("annotations", fname)
+        actual = result[0]
+        self.assertEqual({k: actual[k] for k in expected.keys()}, expected)
+
+    def await_lint_result(self, linter_name_, filename_):
         actual = None
 
         @events.on("LINT_RESULT")
         def on_result(filename, linter_name, errors, **kwargs):
-            nonlocal actual, fname
-            if linter_name == "annotations" and filename == fname:
-                actual = errors[0]
+            nonlocal actual
+            if linter_name == linter_name_ and filename == filename_:
+                actual = errors
 
         self.addCleanup(events.off, on_result)
-        view.run_command('append', {'characters': view_content})
+
         yield lambda: actual is not None
-        assert actual
-        self.assertEqual({k: actual[k] for k in expected.keys()}, expected)
+        return actual
 
     @p.expand(
         [
