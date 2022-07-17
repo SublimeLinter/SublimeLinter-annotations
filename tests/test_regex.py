@@ -1,5 +1,3 @@
-import importlib
-
 import sublime
 from unittesting import DeferrableTestCase
 from SublimeLinter.tests.parameterized import parameterized as p
@@ -10,10 +8,6 @@ from SublimeLinter.lint import events, util
 MYPY = False
 if MYPY:
     from typing import Generator
-
-
-LinterModule = importlib.import_module('SublimeLinter-annotations.linter')
-Linter = LinterModule.Annotations
 
 
 class TestRegex(DeferrableTestCase):
