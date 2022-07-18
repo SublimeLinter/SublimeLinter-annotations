@@ -1,17 +1,16 @@
-import unittest
-import importlib
-
 import sublime
-from SublimeLinter.lint.linter import get_linter_settings
-
+from unittesting import DeferrableTestCase
 from SublimeLinter.tests.parameterized import parameterized as p
 
-
-LinterModule = importlib.import_module('SublimeLinter-annotations.linter')
-Linter = LinterModule.Annotations
+from SublimeLinter.lint import events, linter
 
 
-class TestRegex(unittest.TestCase):
+MYPY = False
+if MYPY:
+    from typing import Generator
+
+
+class LintResultTestCase(DeferrableTestCase):
     def create_window(self):
         sublime.run_command("new_window")
         window = sublime.active_window()
@@ -30,17 +29,40 @@ class TestRegex(unittest.TestCase):
         view.set_scratch(True)
         view.close()
 
-    def assertMatch(self, string, expected):
-        linter = Linter(sublime.View(0), {})
-        actual = list(linter.find_errors(string))[0]
-        # `find_errors` fills out more information we don't want to write down
-        # in the examples
-        self.assertEqual({k: actual[k] for k in expected.keys()}, expected)
+    def prepare_view(self, view_content, syntax):
+        window = self.create_window()
+        view = self.create_view(window)
+        view.assign_syntax(syntax)
+        view.run_command('append', {'characters': view_content})
+        return view
 
-    def assertNoMatch(self, string):
-        linter = Linter(sublime.View(0), {})
-        actual = list(linter.find_errors(string))
-        self.assertFalse(actual)
+    def assertResult(self, result, expected):
+        for actual, error in zip(result, expected):
+            self.assertEqual({k: actual[k] for k in error.keys()}, error)
+
+    def await_lint_result(self, view, linter_name_=None):
+        # type: (sublime.View, str) -> Generator[object, object, list[dict]]
+        if linter_name_ is None:
+            linter_name_ = self.linter_name
+        filename_ = linter.get_view_context(view)["canonical_filename"]
+        actual = None
+
+        @events.on("LINT_RESULT")
+        def on_result(filename, linter_name, errors, **kwargs):
+            # type: (str, str, list[dict], object) -> None
+            nonlocal actual
+            if linter_name == linter_name_ and filename == filename_:
+                actual = errors
+
+        self.addCleanup(events.off, on_result)
+
+        yield lambda: actual is not None
+        assert actual
+        return actual
+
+
+class TestAnnotationsLinter(LintResultTestCase):
+    linter_name = "annotations"
 
     @p.expand(
         [
@@ -49,8 +71,8 @@ class TestRegex(unittest.TestCase):
                 "scope:source.python",
                 {
                     "line": 0,
-                    "col": 2,
-                    "message": "The {} message".format(error_type),
+                    "start": 2,
+                    "msg": "The {} message".format(error_type),
                     "error_type": error_type,
                 },
             )
@@ -61,17 +83,23 @@ class TestRegex(unittest.TestCase):
             )
             for word in words
         ]
+        + [
+            (  # extract author of a note #33
+                "// NOTE(kaste): a note",
+                "scope:source.js",
+                {
+                    "line": 0,
+                    "start": 3,
+                    "msg": "(kaste): a note",
+                    "error_type": "info",
+                },
+            )
+        ]
     )
-    def test_a(self, view_content, syntax, expected):
-        window = self.create_window()
-        view = self.create_view(window)
-        view.assign_syntax(syntax)
-        view.run_command('append', {'characters': view_content})
-
-        settings = get_linter_settings(Linter, view, context=None)
-        linter = Linter(view, settings)
-        actual = list(linter.find_errors("_ignored by plugin"))[0]
-        self.assertEqual({k: actual[k] for k in expected.keys()}, expected)
+    def test_end_to_end(self, view_content, syntax, expected):
+        view = self.prepare_view(view_content, syntax)
+        result = yield from self.await_lint_result(view)
+        self.assertResult(result, [expected])
 
     @p.expand(
         [
@@ -81,8 +109,8 @@ class TestRegex(unittest.TestCase):
                 [
                     {
                         "line": 1,
-                        "col": 2,
-                        "message": "The error message",
+                        "start": 2,
+                        "msg": "The error message",
                         "error_type": "error",
                     }
                 ],
@@ -92,14 +120,9 @@ class TestRegex(unittest.TestCase):
     def test_set_word_group_to_null_issue_39(
         self, view_content, syntax, expected
     ):
-        window = self.create_window()
-        view = self.create_view(window)
-        view.assign_syntax(syntax)
-        view.run_command('append', {'characters': view_content})
+        view = self.prepare_view(view_content, syntax)
+        view.settings().set("SublimeLinter.linters.annotations.infos", None)
 
-        settings = get_linter_settings(Linter, view, context=None)
-        settings["infos"] = []
-        linter = Linter(view, settings)
-        actual = list(linter.find_errors("_ignored by plugin"))
-        for i, error in enumerate(expected):
-            self.assertEqual({k: actual[i][k] for k in error.keys()}, error)
+        result = yield from self.await_lint_result(view)
+
+        self.assertResult(result, expected)
